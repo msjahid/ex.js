@@ -1,4 +1,4 @@
-const {  Student, Admin, Teacher, Role } = require('../models/uss');
+const { Course, Student, Admin, Teacher, Role } = require('../models/uss');
 const router = require('express').Router();
 
 //home get
@@ -63,6 +63,21 @@ router.get('/student', (req, res) => {
     })
 })
 
+router.get('/course', (req, res) => {
+    Course.find()
+    .then(data => res.status(200).json(data))
+    .catch(error => res.json(error));
+})
+
+router.post('/course', async (req, res) => {
+    const {name, code} = req.body;
+    try {
+        const course = await Course.create({name, code});
+        res.status(200).json(course);
+    } catch (error) {
+        res.status(400).json({error: error.message});
+    }
+})
 
 router.post('/login-admin', async (req, res) => {
     const { email, password} = req.body;
@@ -74,6 +89,15 @@ router.post('/login-admin', async (req, res) => {
     }
 })
 
+router.post('/login-student', async (req, res) => {
+    const { email, password} = req.body;
+    try {
+        const student = await Student.login(email, password);
+        res.status(200).json({ student: 'Hey madafucka student!' });
+    }catch (error){
+        res.status(400).json({ error: error.message });
+    }
+})
 
 
 module.exports = router;
