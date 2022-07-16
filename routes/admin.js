@@ -1,6 +1,6 @@
 const { Course, Student, Admin, Teacher, Role } = require('../models/uss');
 const router = require('express').Router();
-const {authUser, authAdmin, authStudent} = require('../controllers/authController');
+const { auth } = require('../controllers/authController');
 const jwt = require('jsonwebtoken');
 
 //home get
@@ -20,7 +20,7 @@ router.post('/roles', async (req, res) => {
     }
 })
 
-router.post('/admin', authAdmin, async (req, res) => {
+router.post('/admin', auth('Admin'), async (req, res) => {
     const { name, email, password, address, role } = req.body;
 
     try {
@@ -31,7 +31,7 @@ router.post('/admin', authAdmin, async (req, res) => {
     }
 })
 
-router.post('/student', authAdmin, async (req, res) => {
+router.post('/student', auth('Admin'), async (req, res) => {
     const { name, email, password, address, role } = req.body;
 
     try {
@@ -43,7 +43,7 @@ router.post('/student', authAdmin, async (req, res) => {
 })
 
 
-router.get('/admin', authAdmin, (req, res) => {
+router.get('/admin', auth('Admin'), (req, res) => {
     Admin.find().populate('role')
     .then(data => {
         res.status(200).json(data);
@@ -54,7 +54,7 @@ router.get('/admin', authAdmin, (req, res) => {
     })
 })
 
-router.get('/student', authAdmin, (req, res) => {
+router.get('/student', auth('Admin'), (req, res) => {
     Student.find().populate('role')
     .then(data => {
         res.status(200).json(data);
@@ -64,10 +64,8 @@ router.get('/student', authAdmin, (req, res) => {
         res.json(error);
     })
 })
-
 //authUser(["Admin", "Teacher", "Student"])
-//[(authAdmin, authStudent)] not working 
-router.get('/course', authAdmin, (req, res) => {
+router.get('/course', auth(['Admin', 'Student']), (req, res) => {
     Course.find()
     .then(data => {
         res.status(200).json(data);
