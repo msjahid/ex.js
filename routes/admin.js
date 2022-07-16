@@ -67,7 +67,7 @@ router.get('/student', authAdmin, (req, res) => {
 
 //authUser(["Admin", "Teacher", "Student"])
 //[(authAdmin, authStudent)] not working 
-router.get('/course', authAdmin, authStudent, (req, res) => {
+router.get('/course', authAdmin, (req, res) => {
     Course.find()
     .then(data => {
         res.status(200).json(data);
