@@ -1,6 +1,7 @@
 const { Course, Student, Admin, Teacher, Role } = require('../models/uss');
 const router = require('express').Router();
 const {authUser} = require('../controllers/authController');
+const jwt = require('jsonwebtoken');
 
 //home get
 router.get('/', (req, res) => {
@@ -19,7 +20,7 @@ router.post('/roles', async (req, res) => {
     }
 })
 
-router.post('/admin', authUser(["Admin"]), async (req, res) => {
+router.post('/admin', async (req, res) => {
     const { name, email, password, address, role } = req.body;
 
     try {
@@ -30,7 +31,7 @@ router.post('/admin', authUser(["Admin"]), async (req, res) => {
     }
 })
 
-router.post('/student', authUser(["Admin"]), async (req, res) => {
+router.post('/student', async (req, res) => {
     const { name, email, password, address, role } = req.body;
 
     try {
@@ -42,7 +43,7 @@ router.post('/student', authUser(["Admin"]), async (req, res) => {
 })
 
 
-router.get('/admin', authUser(["Admin"]), (req, res) => {
+router.get('/admin', (req, res) => {
     Admin.find().populate('role')
     .then(data => {
         res.status(200).json(data);
@@ -53,7 +54,7 @@ router.get('/admin', authUser(["Admin"]), (req, res) => {
     })
 })
 
-router.get('/student', authUser(["Admin"]), (req, res) => {
+router.get('/student', (req, res) => {
     Student.find().populate('role')
     .then(data => {
         res.status(200).json(data);
@@ -64,11 +65,15 @@ router.get('/student', authUser(["Admin"]), (req, res) => {
     })
 })
 
-router.get('/course', authUser(["Admin", "Teacher", "Student"]), (req, res) => {
-    // Postman check just paste role only { "role": "Admin"}
+//authUser(["Admin", "Teacher", "Student"])
+router.get('/course', (req, res) => {
     Course.find()
-    .then(data => res.status(200).json(data))
-    .catch(error => res.json(error));
+    .then(data => {
+        res.status(200).json(data);
+    })
+    .catch(error => {
+        res.status(400).json({error: error.message});
+    })
 })
 
 router.post('/course', async (req, res) => {
@@ -85,7 +90,16 @@ router.post('/login-admin', async (req, res) => {
     const { email, password} = req.body;
     try {
         const admin = await Admin.login(email, password);
-        res.status(200).json({ admin: 'Hey madafucka admin!' });
+        const token = jwt.sign({
+            name: admin.name, 
+            user: admin.role._id
+        }, process.env.JWT_SECRET, {
+            expiresIn: '20s'
+        });
+        res.status(200).json({ 
+            "admin": 'Hey madafucka admin!',
+            "auth_token": token
+        });
     }catch (error){
         res.status(400).json({ error: error.message });
     }
@@ -95,7 +109,16 @@ router.post('/login-student', async (req, res) => {
     const { email, password} = req.body;
     try {
         const student = await Student.login(email, password);
-        res.status(200).json({ student: 'Hey madafucka student!' });
+        const token = jwt.sign({
+            name: student.name, 
+            user: student.role._id
+        }, process.env.JWT_SECRET, {
+            expiresIn: '40s'
+        });
+        res.status(200).json({ 
+            "student": 'Hey madafucka student!',
+            "auth_token": token
+        });
     }catch (error){
         res.status(400).json({ error: error.message });
     }
